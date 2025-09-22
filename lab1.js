@@ -1,4 +1,5 @@
 // PART2 : server.js (Node + Express + Postgres)
+
 const express = require("express");
 const { Pool } = require("pg");
 const dotenv = require("dotenv");
