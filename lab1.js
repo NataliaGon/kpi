@@ -44,56 +44,65 @@ app.listen(port);
 
 // app.listen(port);
 
-// ALTERNATIVE: server-express-cluster.js" (Node + Express + Cluster)
+//PART1 ALTERNATIVE WITH WORKERS
 
-// const cluster = require("node:cluster");
-// const os = require("node:os");
 // const express = require("express");
-// const port = 8080;
+// const { Worker } = require("worker_threads");
+// const os = require("os");
 
-// if (cluster.isPrimary) {
-//   let count = 0;
-//   const n = os.cpus().length;
-//   for (let i = 0; i < n; i++) cluster.fork();
+// const app = express();
+// const port = process.env.PORT || 8880;
 
-//   cluster.on("message", (worker, msg) => {
-//     if (!msg) return;
-//     if (msg.type === "inc") {
-//       count += 1; // single place → atomic globally
-//       worker.send({ type: "inc:ack", id: msg.id });
-//     } else if (msg.type === "get") {
-//       worker.send({ type: "get:res", id: msg.id, value: count });
-//     }
+// const shared = new SharedArrayBuffer(4);
+// const counter = new Int32Array(shared);
+
+// const W = Math.max(2, Math.min(os.cpus().length, 8));
+// const workers = Array.from(
+//   { length: W },
+//   () =>
+//     new Worker(
+//       `
+//   const { parentPort, workerData } = require('worker_threads');
+//   const counter = new Int32Array(workerData.shared);
+//   parentPort.on('message', () => {
+//     // incrementAndGet(): Atomics.add returns OLD value, so +1
+//     const newVal = Atomics.add(counter, 0, 1) + 1;
+//     parentPort.postMessage(newVal);
 //   });
-// } else {
-//   const app = express();
-//   let seq = 0;
-//   const pending = new Map();
+// `,
+//       { eval: true, workerData: { shared } }
+//     )
+// );
 
-//   function askMaster(type) {
-//     return new Promise((resolve) => {
-//       const id = `${process.pid}-${seq++}`;
-//       pending.set(id, resolve);
-//       process.send({ type, id });
-//     });
-//   }
-
-//   process.on("message", (msg) => {
-//     const cb = pending.get(msg.id);
-//     if (cb) {
-//       pending.delete(msg.id);
-//       cb(msg);
-//     }
+// let idx = 0;
+// function incViaWorker() {
+//   return new Promise((resolve) => {
+//     const w = workers[idx];
+//     idx = (idx + 1) % workers.length;
+//     const onMsg = (val) => {
+//       w.off("message", onMsg);
+//       resolve(val);
+//     };
+//     w.on("message", onMsg);
+//     w.postMessage("inc");
 //   });
-
-//   app.get("/inc", async (_req, res) => {
-//     await askMaster("inc");
-//     res.end("OK");
-//   });
-//   app.get("/count", async (_req, res) => {
-//     const r = await askMaster("get");
-//     res.end(String(r.value));
-//   });
-
-//   app.listen(port, () => console.log(`Worker ${process.pid} on ${port}`));
 // }
+
+// app.get("/inc", async (_req, res) => {
+//   try {
+//     const val = await incViaWorker(); // multiple threads increment safely
+//     res.end("Incremented to " + val);
+//   } catch (e) {
+//     console.error(e);
+//     res.statusCode = 500;
+//     res.end("error");
+//   }
+// });
+
+// app.get("/count", (_req, res) => {
+//   res.end(String(Atomics.load(counter, 0))); // atomic read
+// });
+
+// app.listen(port, () => {
+//   console.log(`Listening on http://localhost:${port}  | workers: ${W}`);
+// });
