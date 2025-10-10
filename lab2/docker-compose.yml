@@ -1,0 +1,33 @@
+services:
+  hz1:
+    image: hazelcast/hazelcast:5.3.6
+    container_name: hz1
+    command: ["hz", "start", "--config", "/opt/hazelcast/config/hazelcast.yaml"]
+    volumes:
+      - ./hazelcast.yaml:/opt/hazelcast/config/hazelcast.yaml:ro
+    ports: ["5701:5701"]
+
+  hz2:
+    image: hazelcast/hazelcast:5.3.6
+    container_name: hz2
+    command: ["hz", "start", "--config", "/opt/hazelcast/config/hazelcast.yaml"]
+    volumes:
+      - ./hazelcast.yaml:/opt/hazelcast/config/hazelcast.yaml:ro
+    ports: ["5702:5701"]
+
+  hz3:
+    image: hazelcast/hazelcast:5.3.6
+    container_name: hz3
+    command: ["hz", "start", "--config", "/opt/hazelcast/config/hazelcast.yaml"]
+    volumes:
+      - ./hazelcast.yaml:/opt/hazelcast/config/hazelcast.yaml:ro
+    ports: ["5703:5701"]
+
+  app:
+    image: node:20
+    container_name: hz-client
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on: [hz1, hz2, hz3]
+    command: ["sleep", "infinity"]
