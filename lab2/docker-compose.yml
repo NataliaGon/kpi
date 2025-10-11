@@ -1,6 +1,6 @@
 services:
   hz1:
-    image: hazelcast/hazelcast:5.3.6
+    image: hazelcast/hazelcast:5.4.0
     container_name: hz1
     command: ["hz", "start", "--config", "/opt/hazelcast/config/hazelcast.yaml"]
     volumes:
@@ -8,7 +8,7 @@ services:
     ports: ["5701:5701"]
 
   hz2:
-    image: hazelcast/hazelcast:5.3.6
+    image: hazelcast/hazelcast:5.4.0
     container_name: hz2
     command: ["hz", "start", "--config", "/opt/hazelcast/config/hazelcast.yaml"]
     volumes:
@@ -16,7 +16,7 @@ services:
     ports: ["5702:5701"]
 
   hz3:
-    image: hazelcast/hazelcast:5.3.6
+    image: hazelcast/hazelcast:5.4.0
     container_name: hz3
     command: ["hz", "start", "--config", "/opt/hazelcast/config/hazelcast.yaml"]
     volumes:

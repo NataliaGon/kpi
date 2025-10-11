@@ -7,19 +7,24 @@ const { KEY, THREADS, ITER } = require("./constants");
   await map.put(KEY, 0);
 
   console.time("map-pessimistic");
-  await Promise.all(
-    Array.from({ length: THREADS }, async () => {
-      for (let i = 0; i < ITER; i++) {
-        await map.lock(KEY);
-        try {
-          const v = await map.get(KEY);
-          await map.put(KEY, v + 1);
-        } finally {
-          await map.unlock(KEY);
-        }
+
+  const worker = async () => {
+    for (let i = 0; i < ITER; i++) {
+      await map.lock(KEY);
+      try {
+        const v = await map.get(KEY);
+        await map.put(KEY, v + 1);
+      } finally {
+        await map.unlock(KEY);
       }
-    })
-  );
+    }
+  };
+  const workers = [];
+  for (let i = 0; i < THREADS; i++) {
+    workers.push(worker(i));
+  }
+  await Promise.all(workers);
+
   console.timeEnd("map-pessimistic");
 
   console.log("Final (pessimistic):", await map.get(KEY), "— expected 100000");

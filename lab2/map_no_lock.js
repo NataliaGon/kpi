@@ -7,15 +7,19 @@ const { KEY, THREADS, ITER } = require("./constants");
   await map.put(KEY, 0);
 
   console.time("map-no-lock");
-  const worker = async (id) => {
+  const worker = async () => {
     for (let i = 0; i < ITER; i++) {
       const v = await map.get(KEY);
       await map.put(KEY, v + 1);
-      if (i % 25 === 0) console.log(`w${id}: ${i}/${ITER}`);
     }
   };
 
-  await Promise.all(Array.from({ length: THREADS }, (_, i) => worker(i)));
+  const workers = [];
+  for (let i = 0; i < THREADS; i++) {
+    workers.push(worker(i));
+  }
+  await Promise.all(workers);
+
   console.timeEnd("map-no-lock");
 
   console.log("Final (no-lock):", await map.get(KEY), "— expected < 100000");
