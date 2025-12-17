@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS counters (
+  id    INTEGER PRIMARY KEY,
+  value BIGINT NOT NULL
+);

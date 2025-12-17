@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: counter
+      POSTGRES_PASSWORD: counter
+      POSTGRES_DB: counterdb
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  hazelcast-app:
+    build: ./hazelcast-app
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/counterdb
+      DB_USER: counter
+      DB_PASSWORD: counter
+      HZ_CLUSTER_NAME: dev
+    depends_on:
+      - db
+    ports:
+      - "8880:8880"
+      - "5701:5701" # hazelcast member port (optional to expose)
+volumes:
+  dbdata:

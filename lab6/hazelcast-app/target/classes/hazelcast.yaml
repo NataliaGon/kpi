@@ -1,0 +1,12 @@
+hazelcast:
+  cluster-name: dev
+
+  map:
+    counters:
+      backup-count: 1
+      read-backup-data: true
+
+      map-store:
+        enabled: true
+        class-name: com.noa.counter.hz.CounterStore
+        write-delay-seconds: 0
